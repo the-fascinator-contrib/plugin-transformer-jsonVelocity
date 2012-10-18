@@ -153,20 +153,4 @@ public class JsonVelocityTransformerTest {
         Assert.assertEquals(1, anzsrcSeo2.size());
     }
 
-    // Utility test
-    @Test
-    public void testDate() {
-        try {
-            String date = util.getW3CDateTime("2010");
-            Assert.assertEquals(date, "2010-01-01T00:00:00+1000");
-            
-            date = util.getW3CDateTime("2010-10");
-            Assert.assertEquals(date, "2010-10-01T00:00:00+1000");
-            
-            date = util.getW3CDateTime("2010-10-28");
-            Assert.assertEquals(date, "2010-10-28T00:00:00+1000");
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-    }
 }
