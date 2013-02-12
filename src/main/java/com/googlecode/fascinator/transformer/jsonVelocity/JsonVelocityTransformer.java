@@ -121,17 +121,17 @@ import org.slf4j.LoggerFactory;
  */
 public class JsonVelocityTransformer implements Transformer {
     /** Default portal */
-    private static String DEFAULT_PORTAL = "default";
+    protected static String DEFAULT_PORTAL = "default";
 
     /** Default payload */
-    private static String DEFAULT_PAYLOAD = "object.tfpackage";
+    protected static String DEFAULT_PAYLOAD = "object.tfpackage";
 
     /** Logger */
     private static Logger log =
             LoggerFactory.getLogger(JsonVelocityTransformer.class);
 
     /** Json config file **/
-    private JsonSimpleConfig systemConfig;
+    protected JsonSimpleConfig systemConfig;
 
     /** Default Template file or folder **/
     private File systemTemplates;
@@ -203,8 +203,7 @@ public class JsonVelocityTransformer implements Transformer {
             util = new Util();
 
             // Find where our templates are
-            String templatePath = systemConfig.getString(null,
-                    "transformerDefaults", "jsonVelocity", "templatesPath");
+            String templatePath = getTemplatePath();
             if (templatePath != null) {
                 systemTemplates = new File(templatePath);
                 if (systemTemplates == null || !systemTemplates.exists()) {
@@ -214,15 +213,13 @@ public class JsonVelocityTransformer implements Transformer {
             }
 
             // What is our source payload
-            systemPayload = systemConfig.getString(DEFAULT_PAYLOAD,
-                    "transformerDefaults", "jsonVelocity", "sourcePayload");
+            systemPayload = getSystemPayload();
 
             // What portal should be used in URLs
-            systemPortal = systemConfig.getString(DEFAULT_PORTAL,
-                    "transformerDefaults", "jsonVelocity", "portalId");
+            systemPortal = getSystemPortal();
 
             // URL Base
-            urlBase = systemConfig.getString(null, "urlBase");
+            urlBase = getUrlBase();
             if (urlBase == null) {
                 throw new TransformerException("No URL base in system config");
             }
@@ -233,7 +230,26 @@ public class JsonVelocityTransformer implements Transformer {
         itemTemplates = null;
     }
 
-    /**
+	protected String getUrlBase() {
+		return systemConfig.getString(null, "urlBase");
+	}
+
+	protected String getSystemPortal() {
+		return systemConfig.getString(DEFAULT_PORTAL,
+		        "transformerDefaults", "jsonVelocity", "portalId");
+	}
+
+    protected String getSystemPayload() {
+    	return systemConfig.getString(DEFAULT_PAYLOAD,
+                "transformerDefaults", "jsonVelocity", "sourcePayload");
+	}
+
+	protected String getTemplatePath() {
+    	return systemConfig.getString(null,
+                "transformerDefaults", "jsonVelocity", "templatesPath");
+	}
+
+	/**
      * Initialise the Velocity engine, paying attention to whether or not
      * the template path has changed.
      *
@@ -444,7 +460,7 @@ public class JsonVelocityTransformer implements Transformer {
      * @return Payload: The payload object successfully stored
      * @throws TransformerException if storage fails
      */
-    private Payload storeData(DigitalObject object, String pid, String data)
+    protected Payload storeData(DigitalObject object, String pid, String data)
             throws TransformerException {
         try {
             try {
@@ -523,7 +539,7 @@ public class JsonVelocityTransformer implements Transformer {
      * @param templateName: The name of the template file
      * @return String: The payload ID to use
      */
-    private String payloadName(String templateName) {
+    protected String payloadName(String templateName) {
         return templateName.substring(0, templateName.indexOf(".")) + ".xml";
     }
 
