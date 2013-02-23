@@ -18,24 +18,25 @@
  */
 package com.googlecode.fascinator.transformer.jsonVelocity;
 
-import com.googlecode.fascinator.api.PluginManager;
-import com.googlecode.fascinator.api.storage.DigitalObject;
-import com.googlecode.fascinator.api.storage.Storage;
-import com.googlecode.fascinator.common.JsonSimple;
-import com.googlecode.fascinator.common.JsonSimpleConfig;
-import com.googlecode.fascinator.common.storage.StorageUtils;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import com.googlecode.fascinator.api.PluginManager;
+import com.googlecode.fascinator.api.storage.DigitalObject;
+import com.googlecode.fascinator.api.storage.Storage;
+import com.googlecode.fascinator.common.JsonSimple;
+import com.googlecode.fascinator.common.JsonSimpleConfig;
+import com.googlecode.fascinator.common.storage.StorageUtils;
 
 /**
  * Tests the JsonVelocityTransformer
@@ -153,4 +154,24 @@ public class JsonVelocityTransformerTest {
         Assert.assertEquals(1, anzsrcSeo2.size());
     }
 
+    // Utility test
+    @Test
+    public void testDate() {
+        try {
+        	//Set the TimeZone to Queensland to ensure that date string is correct for test
+        	TimeZone qldZone = TimeZone.getTimeZone("Australia/Brisbane");
+        	TimeZone.setDefault(qldZone);
+            String date = util.getW3CDateTime("2010");
+            Assert.assertEquals(date, "2010-01-01T00:00:00+1000");
+            
+            date = util.getW3CDateTime("2010-10");
+            Assert.assertEquals(date, "2010-10-01T00:00:00+1000");
+            
+            date = util.getW3CDateTime("2010-10-28");
+            Assert.assertEquals(date, "2010-10-28T00:00:00+1000");
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+    }
+    
 }

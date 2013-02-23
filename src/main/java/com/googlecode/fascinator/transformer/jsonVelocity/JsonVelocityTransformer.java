@@ -18,6 +18,24 @@
  */
 package com.googlecode.fascinator.transformer.jsonVelocity;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+
+import org.apache.velocity.Template;
+import org.apache.velocity.VelocityContext;
+import org.apache.velocity.app.Velocity;
+import org.apache.velocity.app.VelocityEngine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.googlecode.fascinator.api.PluginDescription;
 import com.googlecode.fascinator.api.PluginException;
 import com.googlecode.fascinator.api.storage.DigitalObject;
@@ -27,22 +45,7 @@ import com.googlecode.fascinator.api.transformer.Transformer;
 import com.googlecode.fascinator.api.transformer.TransformerException;
 import com.googlecode.fascinator.common.JsonSimple;
 import com.googlecode.fascinator.common.JsonSimpleConfig;
-
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.velocity.Template;
-import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.Velocity;
-import org.apache.velocity.app.VelocityEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.googlecode.fascinator.common.storage.StorageUtils;
 
 /**
  * <p>
@@ -94,6 +97,49 @@ import org.slf4j.LoggerFactory;
  * <td>default</td>
  * </tr>
  *
+ * <tr>
+ * <td>checkForTFMETAProperty</td>
+ * <td>Whether or not to check for a property in TF-META-OBJ to decide whether to transform the payload or not.</td>
+ * <td><b>No</b></td>
+ * <td>false</td>
+ * </tr>
+ * 
+ * <tr>
+ * <td>TFMETAPropertyName</td>
+ * <td>If checkForTFMETAProperty is set to true. What is the property name to chec.k</td>
+ * <td><b>No (Yes if checkForTFMETAProperty is true)</b></td>
+ * <td>N/A</td>
+ * </tr>
+ * 
+ * <tr>
+ * <td>TFMETAPropertyValue</td>
+ * <td>If checkForTFMETAProperty is set to true. What is the property value to check.</td>
+ * <td><b>No (Yes if checkForTFMETAProperty is true)</b></td>
+ * <td>N/A</td>
+ * </tr>
+ * 
+ * <tr>
+ * <td>clearPropertyOnTransform</td>
+ * <td>If checkForTFMETAProperty is set to true. Should the property be cleared while we are transforming allowing for one time transforms</td>
+ * <td><b>No (Yes if checkForTFMETAProperty is true)</b></td>
+ * <td>false</td>
+ * </tr>
+ * 
+ * 
+ * <tr>
+ * <td>transformSource</td>
+ * <td>Rather than outputting to a new file, are we transforming the original source file?</td>
+ * <td><b>No</b></td>
+ * <td>false</td>
+ * </tr>
+ *   
+ * <tr>
+ * <td>outputExtension</td>
+ * <td>The file extension for the outputted file</td>
+ * <td><b>No</b></td>
+ * <td>xml</td>
+ * </tr>
+ * 
  * <h3>Examples</h3>
  * <ol>
  * <li>
@@ -353,84 +399,125 @@ public class JsonVelocityTransformer implements Transformer {
             throw new TransformerException("Invalid configuration! '{}'", ex);
         }
 
-        // Source payload
-        String source = itemConfig.getString(systemPayload, "sourcePayload");
-        Payload sourcePayload = null;
-        try {
-            // Sometimes config will be just an extension eg. ".tfpackage"
-            for (String payloadId : in.getPayloadIdList()) {
-                if (payloadId.endsWith(source)) {
-                    source = payloadId;
-                }
-            }
-            log.info("Transforming PID '{}' from OID '{}'", source, in.getId());
-            sourcePayload = in.getPayload(source);
-        } catch (StorageException ex) {
-            log.error("Error accessing payload in storage: '{}'", ex);
-        }
+        
+		if (okToProcess(in, itemConfig)) {
+			// Source payload
+			String source = itemConfig
+					.getString(systemPayload, "sourcePayload");
+			Payload sourcePayload = null;
+			try {
+				// Sometimes config will be just an extension eg. ".tfpackage"
+				for (String payloadId : in.getPayloadIdList()) {
+					if (payloadId.endsWith(source)) {
+						source = payloadId;
+					}
+				}
+				log.info("Transforming PID '{}' from OID '{}'", source,
+						in.getId());
+				sourcePayload = in.getPayload(source);
+			} catch (StorageException ex) {
+				log.error("Error accessing payload in storage: '{}'", ex);
+			}
 
-        // Now read the data out of storage
-        JsonSimple json = null;
-        try {
-            json = new JsonSimple(sourcePayload.open());
-            sourcePayload.close();
-        } catch (Exception ex) {
-            throw new TransformerException(
-                    "Error accessing JSON payload: ", ex);
-        }
+			// Now read the data out of storage
+			JsonSimple json = null;
+			try {
+				json = new JsonSimple(sourcePayload.open());
+				sourcePayload.close();
+			} catch (Exception ex) {
+				throw new TransformerException(
+						"Error accessing JSON payload: ", ex);
+			}
 
-        // PortalID
-        String portalId = itemConfig.getString(systemPortal, "portalId");
+			// PortalID
+			String portalId = itemConfig.getString(systemPortal, "portalId");
 
-        // Find all the templates we are running
-        List<File> templates = getListOfTemplates();
-        if (templates.isEmpty()) {
-            log.info("No templates to execute");
-            return in;
-        }
+			// Find all the templates we are running
+			List<File> templates = getListOfTemplates();
+			if (templates.isEmpty()) {
+				log.info("No templates to execute");
+				return in;
+			}
 
-        // Initialise our velocity engine
-        initVelocityEngine();
+			// Initialise our velocity engine
+			initVelocityEngine();
 
-        // Bind all the data we want in the template
-        VelocityContext vc = new VelocityContext();
-        vc.put("systemConfig", systemConfig);
-        vc.put("item", json);
-        vc.put("util", util);
-        vc.put("oid", in.getId());
-        vc.put("object", in);
-        vc.put("urlBase", urlBase + portalId);
+			// Bind all the data we want in the template
+			VelocityContext vc = new VelocityContext();
+			vc.put("systemConfig", systemConfig);
+			vc.put("item", json);
+			vc.put("util", util);
+			vc.put("oid", in.getId());
+			vc.put("object", in);
+			vc.put("urlBase", urlBase + portalId);
 
-        // Render each template
-        for (File file : templates) {
-            String output = null;
-            // Find and render the template
-            try {
-                Template template = velocity.getTemplate(file.getName());
-                log.info("Rendering template: '{}'", file.getName());
-                output = renderTemplate(template, vc);
-            } catch (Exception ex) {
-                log.error("Error rendering template: '" +
-                        file.getName() + "': ", ex);
-            }
+			// Render each template
+			for (File file : templates) {
+				String output = null;
+				// Find and render the template
+				try {
+					Template template = velocity.getTemplate(file.getName());
+					log.info("Rendering template: '{}'", file.getName());
+					output = renderTemplate(template, vc);
+				} catch (Exception ex) {
+					log.error("Error rendering template: '" + file.getName()
+							+ "': ", ex);
+				}
 
-            if (output == null) {
-                log.error("Unknown error rendering template: '{}'",
-                        file.getName());
-            } else {
-                // Store the output
-                try {
-                    String payloadName = payloadName(file.getName());
-                    storeData(in, payloadName, output);
-                } catch (Exception ex) {
-                    log.error("Error storing rendered output: '" +
-                            file.getName() + "'", ex);
-                }
-            }
-        }
-
+				if (output == null) {
+					log.error("Unknown error rendering template: '{}'",
+							file.getName());
+				} else {
+					// Store the output
+					try {
+						String payloadName = payloadName(file.getName());
+						if(itemConfig.getBoolean(false, "transformSource")) {
+							payloadName = sourcePayload.getId(); 
+						}
+						storeData(in, payloadName, output);
+					} catch (Exception ex) {
+						log.error(
+								"Error storing rendered output: '"
+										+ file.getName() + "'", ex);
+					}
+				}
+			}
+		}
         return in;
     }
+    
+    private boolean okToProcess(DigitalObject in, JsonSimple itemConfig) throws TransformerException{
+		if(itemConfig.getBoolean(false, "checkForTFMETAProperty")) {
+			String propertyName = itemConfig.getString(null,"TFMETAPropertyName");
+			String propertyValue = itemConfig.getString(null,"TFMETAPropertyValue");
+			if(propertyName != null && propertyValue != null) {
+				Properties tfMetadata;
+				try {
+					tfMetadata = in.getMetadata();
+				} catch (StorageException e) {
+					throw new TransformerException(e);
+				}
+				if(!propertyValue.equals(tfMetadata.getProperty(propertyName))){
+					return false;
+				}
+				if(itemConfig.getBoolean(false, "clearPropertyOnTransform")) {
+					ByteArrayInputStream input;
+					try {
+						tfMetadata.remove(propertyName);	
+						ByteArrayOutputStream output = new ByteArrayOutputStream();
+						tfMetadata.store(output, null);
+						input = new ByteArrayInputStream(output.toByteArray());
+						StorageUtils.createOrUpdatePayload(in,"TF-OBJ-META",input);
+					} catch (Exception e) {
+						throw new TransformerException(e);
+					}
+					
+				}
+			}
+			
+		}
+		return true;
+	}
 
     /**
      * Render a velocity template
@@ -534,13 +621,14 @@ public class JsonVelocityTransformer implements Transformer {
 
     /**
      * Given the name of the provided template, change the extension for use as
-     * a payload ID. At this point in time, this is hardcoded to .xml
+     * a payload ID.
      *
      * @param templateName: The name of the template file
      * @return String: The payload ID to use
      */
     protected String payloadName(String templateName) {
-        return templateName.substring(0, templateName.indexOf(".")) + ".xml";
+    	String extension = itemConfig.getString("xml", "outputExtension");
+    	return templateName.substring(0, templateName.lastIndexOf(".")) + "."+extension;
     }
 
 }
