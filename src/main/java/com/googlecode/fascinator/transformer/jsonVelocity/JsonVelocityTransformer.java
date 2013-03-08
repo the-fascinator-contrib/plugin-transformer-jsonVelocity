@@ -28,6 +28,8 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.Date;
+import java.text.SimpleDateFormat;
 
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
@@ -201,7 +203,7 @@ public class JsonVelocityTransformer implements Transformer {
     private File oldTemplates;
 
     /** Json config file **/
-    private JsonSimple itemConfig;
+    protected JsonSimple itemConfig;
 
     /** Template file or folder **/
     private File itemTemplates;
@@ -630,5 +632,21 @@ public class JsonVelocityTransformer implements Transformer {
     	String extension = itemConfig.getString("xml", "outputExtension");
     	return templateName.substring(0, templateName.lastIndexOf(".")) + "."+extension;
     }
-
+    
+    /**
+     * Like payloadName(String), it returns a name with timestamp
+     */
+    protected String getTimestampedPayload(String payloadName) {
+    	int extensionIndex = payloadName.lastIndexOf(".");
+    	if(extensionIndex != -1) {
+    		String extension = payloadName.substring(extensionIndex, payloadName.length());
+    		return payloadName.substring(0, extensionIndex) + "-" + getTimeStamp() + extension;
+    	} 
+    	return payloadName + "-" + getTimeStamp();       
+    }
+    
+    protected String getTimeStamp() {
+    	SimpleDateFormat convertor = new SimpleDateFormat("yyyyMMddHHmmss");
+    	return convertor.format(new Date());
+    }
 }
