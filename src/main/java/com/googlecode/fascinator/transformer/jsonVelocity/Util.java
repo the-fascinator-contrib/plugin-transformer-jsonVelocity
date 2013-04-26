@@ -3,17 +3,23 @@ package com.googlecode.fascinator.transformer.jsonVelocity;
 import com.googlecode.fascinator.api.storage.DigitalObject;
 import com.googlecode.fascinator.api.storage.StorageException;
 import com.googlecode.fascinator.common.JsonSimple;
+import com.googlecode.fascinator.portal.lookup.MintLookupHelper;
+import com.googlecode.fascinator.common.JsonSimpleConfig;
 
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.SortedMap;
 import java.util.TimeZone;
 import java.util.TreeMap;
+
+import org.json.simple.JSONArray;
+import java.util.ArrayList;
 
 import org.apache.commons.lang.StringEscapeUtils;
 import org.slf4j.Logger;
@@ -29,7 +35,7 @@ public class Util {
 
     /** Logger */
     static Logger log = LoggerFactory.getLogger(JsonVelocityTransformer.class);
-
+    
     /**
      * Getlist method to get the values of key from the sourceMap
      *
@@ -269,5 +275,31 @@ public class Util {
      */
     public String encodeXml(String value) {
         return StringEscapeUtils.escapeXml(value);
+    }
+    
+    /**
+     * Using Mint to look up labels of saved Mint item ids 
+     * 
+     * @param systemConfig: Json config file
+     * @param urlName: Query url defined in config file
+     * @param ids: String contains query ids
+     * @return ArrayList<String>: Labels of query ids
+     */
+    public ArrayList<String> getMintLabels(JsonSimpleConfig systemConfig, String urlName, String ids) {
+    	Map<String, String> mapIds = new HashMap<String, String>();
+    	mapIds.put("id",ids);
+    	try {
+    		JsonSimple labelsMint = MintLookupHelper.get(systemConfig, urlName, mapIds);
+    		ArrayList<String> labels = new ArrayList();
+    		JSONArray arr = labelsMint.getJsonArray();
+			for (int i = 0; i < arr.size(); i++) {
+                JsonSimple labelJson = new JsonSimple(arr.get(i).toString());
+                labels.add(labelJson.getString("", "label")); 
+    		}
+            return labels;
+    	} catch (Exception ex) {
+    		log.error("PDF transfer - When retrieving Mint labels: ", ex);
+    		return null;
+    	}
     }
 }
