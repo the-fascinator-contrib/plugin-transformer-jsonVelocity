@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.googlecode.the-fascinator.plugins</groupId>
   <artifactId>plugin-transformer-jsonVelocity</artifactId>
-  <version>1.1.4-SNAPSHOT</version>
+  <version>1.1.4</version>
   <name>Fascinator - Plugin - Transformer - JSON Velocity</name>
   <parent>
     <artifactId>organisation</artifactId>
@@ -17,7 +17,7 @@
     <dependency>
       <groupId>com.googlecode.the-fascinator</groupId>
       <artifactId>fascinator-common</artifactId>
-      <version>1.1.4-SNAPSHOT</version>
+      <version>1.1.4</version>
       <exclusions>
         <exclusion>
           <groupId>velocity</groupId>
@@ -30,7 +30,7 @@
       <artifactId>fascinator-portal</artifactId>
       <type>jar</type>
    		<classifier>classes</classifier>
-		<version>1.1.4-SNAPSHOT</version>
+		<version>1.1.4</version>
 		<scope>provided</scope>
     </dependency>
     <dependency>
