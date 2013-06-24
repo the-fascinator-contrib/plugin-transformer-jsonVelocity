@@ -16,6 +16,7 @@ import java.util.TimeZone;
 import java.util.TreeMap;
 
 import org.apache.commons.lang.StringEscapeUtils;
+import org.json.simple.JSONValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -269,5 +270,16 @@ public class Util {
      */
     public String encodeXml(String value) {
         return StringEscapeUtils.escapeXml(value);
+    }
+    
+    
+    /**
+     * Safely escape the supplied string for use in JSON.
+     * 
+     * @param value: The string to escape
+     * @return String: The escaped string
+     */
+    public String encodeJson(String value) {
+        return JSONValue.escape(value);
     }
 }
