@@ -48,6 +48,9 @@ import com.googlecode.fascinator.api.transformer.TransformerException;
 import com.googlecode.fascinator.common.JsonSimple;
 import com.googlecode.fascinator.common.JsonSimpleConfig;
 import com.googlecode.fascinator.common.storage.StorageUtils;
+import com.googlecode.fascinator.portal.services.PortalManager;
+import com.googlecode.fascinator.portal.services.ScriptingServices;
+import com.googlecode.fascinator.spring.ApplicationContextProvider;
 
 /**
  * <p>
@@ -207,6 +210,8 @@ public class JsonVelocityTransformer implements Transformer {
 
     /** Template file or folder **/
     private File itemTemplates;
+    
+    private ScriptingServices scriptingServices;
 
     /**
      * Overridden method init to initialize
@@ -246,6 +251,12 @@ public class JsonVelocityTransformer implements Transformer {
      * @throws TransformerException if errors occur
      */
     private void reset() throws TransformerException {
+    	//Load in our scripting services from Spring. Note that it's not a fully initialised Scripting Services yet. Only services accessible from getService are initialised.
+    	if(scriptingServices == null) {
+    		if(ApplicationContextProvider.getApplicationContext() != null) {
+    			scriptingServices = ApplicationContextProvider.getApplicationContext().getBean("scriptingServices",ScriptingServices.class);
+    		}
+    	}
         // Utility Library... and test if this is the first execution
         if (util == null) {
             util = new Util();
@@ -317,21 +328,30 @@ public class JsonVelocityTransformer implements Transformer {
                 oldTemplates = itemTemplates;
 
                 velocity = new VelocityEngine();
-                velocity.setProperty(Velocity.RESOURCE_LOADER, "file, class");
+                velocity.setProperty(Velocity.RESOURCE_LOADER, "file, class, url");
                 velocity.setProperty(Velocity.FILE_RESOURCE_LOADER_CACHE,
                         "false");
                 velocity.setProperty("class.resource.loader.class",
                         "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
+                velocity.setProperty("url.resource.loader.class",
+                        "org.apache.velocity.runtime.resource.loader.URLResourceLoader");
+                
                 velocity.setProperty("directive.set.null.allowed", "true");
                 velocity.setProperty(Velocity.RUNTIME_LOG_LOGSYSTEM_CLASS,
                     "com.googlecode.fascinator.transformer.jsonVelocity.LoggingWrapper");
-
+                
+                velocity.setProperty("url.resource.loader.root", "");
                 File templateDir = itemTemplates;
                 if (itemTemplates.isFile()) {
                     templateDir = itemTemplates.getParentFile();
                 }
                 velocity.setProperty(Velocity.FILE_RESOURCE_LOADER_PATH,
                         templateDir.getAbsolutePath());
+                String portalPath = systemConfig.getString(PortalManager.DEFAULT_PORTAL_HOME,"portal","home");
+                File portalLibraryFile = new File(portalPath +"/portal-library.vm");
+                if(portalLibraryFile.exists()) {
+                	velocity.setProperty("velocimacro.library", portalLibraryFile.toURI().toURL().toExternalForm().toString());
+                }
                 velocity.init();
             } catch (Exception ex) {
                 velocity = null;
@@ -449,6 +469,7 @@ public class JsonVelocityTransformer implements Transformer {
 			vc.put("systemConfig", systemConfig);
 			vc.put("item", json);
 			vc.put("util", util);
+			vc.put("Services", scriptingServices);
 			vc.put("oid", in.getId());
 			vc.put("object", in);
 			vc.put("urlBase", urlBase + portalId);
