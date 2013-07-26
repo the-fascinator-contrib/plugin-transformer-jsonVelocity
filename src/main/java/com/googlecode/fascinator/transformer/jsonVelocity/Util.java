@@ -1,7 +1,29 @@
+/* 
+ * Fascinator - Plugin - Tranformer - jsonVelocity
+ * Copyright (C) 2013 Queensland Cyber Infrastructure Foundation (http://www.qcif.edu.au/)
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+
 package com.googlecode.fascinator.transformer.jsonVelocity;
+
+
 
 import com.googlecode.fascinator.api.storage.DigitalObject;
 import com.googlecode.fascinator.api.storage.StorageException;
+import com.googlecode.fascinator.common.JsonObject;
 import com.googlecode.fascinator.common.JsonSimple;
 import com.googlecode.fascinator.portal.lookup.MintLookupHelper;
 import com.googlecode.fascinator.common.JsonSimpleConfig;
@@ -12,6 +34,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.SortedMap;
@@ -30,6 +53,8 @@ import org.slf4j.LoggerFactory;
  * Utility class for JsonVelocity Transformer
  * 
  * @author Linda Octalina
+ * @author Andrew Brazzatti
+ * @author Jianfeng Li
  * 
  */
 public class Util {
@@ -156,7 +181,88 @@ public class Util {
         //log.info("{}: {}", baseKey, valueMap);
         return valueMap;
     }
+    
+    /**
+     * getJavaList method to reconstruct an list of JSONObjects of a key from a JsonSimple object
+     *
+     * @param json: JsonSimple object of source
+     * @param baseKey: field to search
+     * @return List: a list of JsonObject based on baseKey
+     */
+    public List<JsonObject> getJavaList(JsonSimple json, String baseKey) {
+        List<JsonObject> valueList = new ArrayList<JsonObject>();
 
+        if (baseKey == null) {
+            log.error("NULL baseKey provided!");
+            return valueList;
+        }
+        if (!baseKey.endsWith(".")) {
+            baseKey = baseKey + ".";
+        }
+
+        if (json == null) {
+            log.error("NULL JSON object provided!");
+            return valueList;
+        }
+
+        for (Object oKey : json.getJsonObject().keySet()) {
+            String key = (String) oKey;
+            if (key.startsWith(baseKey)) {
+                String value = json.getString(null, key);
+                String field = baseKey;
+
+                if (key.length() >= baseKey.length()) { // It is an pseudo-JSON array 
+                    field = key.substring(baseKey.length(), key.length());
+                }
+
+                String indexString = field;
+                String suffix = "value"; // Default JSON key in returned JsonObject if it is a simple string
+                if (field.indexOf(".") > 0) { // This is not a simple string, get the key of it
+                    indexString = field.substring(0, field.indexOf("."));
+                    suffix = field.substring(field.indexOf(".")+1, field.length());
+                }
+                int index = Integer.parseInt(indexString) - 1;
+
+                if (valueList.size() <= index ) {
+                	while(valueList.size() < index + 1) { 
+                		valueList.add(new JsonObject());  
+                	}
+                } 
+                
+                if (value.length() == 1) {
+                    value = String.valueOf(value.charAt(0));
+                }
+
+                valueList.get(index).put(suffix, value);
+            }
+        }
+        return valueList;
+    }
+
+    /**
+     * getStringList method to reconstruct an list of String of a key from a JsonSimple object
+     *
+     * @param json: JsonSimple object of source
+     * @param baseKey: field to search
+     * @return List: a List of JsonObject based on baseKey
+     */
+    public List<String> getStringList(JsonSimple json, String baseKey) {
+    	List<JsonObject> jsonList = getJavaList(json, baseKey);
+    	List<String> valueList = new ArrayList<String>(jsonList.size());
+    	if (jsonList.size() == 0) {
+    		return valueList; 
+    	}
+    	for(int i = 0; i < jsonList.size(); i++) {
+    		String t = (String) jsonList.get(i).get("value");
+    		if (t.equals("null")) {
+    			valueList.add("");
+    		} else {
+    			valueList.add(t);
+    		}
+    	}
+    	return valueList;
+    }
+    
     /**
      * Trivial wrapper for call into JSON Library. Removes the difficulty of
      * dealing with a null argument and a vararg from Velocity.
@@ -172,6 +278,18 @@ public class Util {
         }
 
         return json.getString(null, field);
+    }
+    
+    /**
+     * Similar to get Method but return empty string instead of null
+     *
+     * @param json: The JSON object to get from
+     * @param field: The field in the JSON object to get
+     * @return String: The data in the field, possibly NULL
+     */
+    public String getEmptyIfNull(JsonSimple json, Object... field) {
+    	String value = get(json, field);
+    	return value == null ? "" : value;
     }
 
     /**
