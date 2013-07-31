@@ -31,6 +31,8 @@ import java.util.Properties;
 import java.util.Date;
 import java.text.SimpleDateFormat;
 
+import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
@@ -500,6 +502,8 @@ public class JsonVelocityTransformer implements Transformer {
 			// Adding jsonUtil binding here so that we can have a common binding
 			// to the one used in CachingDynamicPageService
 			vc.put("jsonUtil", util);
+	        vc.put("StringUtils", StringUtils.class);
+	        vc.put("StringEscapeUtils", StringEscapeUtils.class);
 			vc.put("Services", scriptingServices);
 			vc.put("oid", in.getId());
 			vc.put("object", in);
