@@ -528,7 +528,8 @@ public class JsonVelocityTransformer implements Transformer {
 				} else {
 					// Store the output
 					try {
-						String payloadName = payloadName(file.getName());
+						
+						String payloadName = itemConfig.getString(payloadName(file.getName()),"outputFilename");
 						if (itemConfig.getBoolean(false, "transformSource")) {
 							payloadName = sourcePayload.getId();
 						}
