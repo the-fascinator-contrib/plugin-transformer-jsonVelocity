@@ -27,6 +27,7 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Date;
 import java.text.SimpleDateFormat;
@@ -47,6 +48,7 @@ import com.googlecode.fascinator.api.storage.Payload;
 import com.googlecode.fascinator.api.storage.StorageException;
 import com.googlecode.fascinator.api.transformer.Transformer;
 import com.googlecode.fascinator.api.transformer.TransformerException;
+import com.googlecode.fascinator.common.JsonObject;
 import com.googlecode.fascinator.common.JsonSimple;
 import com.googlecode.fascinator.common.JsonSimpleConfig;
 import com.googlecode.fascinator.common.storage.StorageUtils;
@@ -509,6 +511,13 @@ public class JsonVelocityTransformer implements Transformer {
 			vc.put("object", in);
 			vc.put("urlBase", urlBase + portalId);
 
+			JsonObject params = (JsonObject) itemConfig.getJsonObject().get("velocityContextParams");
+			if(params != null) {
+				for (Object key : params.keySet()) {
+					vc.put((String)key, params.get(key));
+				}
+			}
+			
 			// Render each template
 			for (File file : templates) {
 				String output = null;
