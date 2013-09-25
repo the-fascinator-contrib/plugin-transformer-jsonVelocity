@@ -452,6 +452,8 @@ public class JsonVelocityTransformer implements Transformer {
 			vc.put("oid", in.getId());
 			vc.put("object", in);
 			vc.put("urlBase", urlBase + portalId);
+			//@TODO : 1.7 Migration - remove the line below
+			vc.put("Services", new IndexerHelper()); 
 
 			// Render each template
 			for (File file : templates) {
