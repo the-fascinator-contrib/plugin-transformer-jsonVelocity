@@ -3,6 +3,7 @@ package com.googlecode.fascinator.transformer.jsonVelocity;
 import com.googlecode.fascinator.api.storage.DigitalObject;
 import com.googlecode.fascinator.api.storage.StorageException;
 import com.googlecode.fascinator.common.JsonSimple;
+import com.googlecode.fascinator.common.StorageDataUtil;
 import com.googlecode.fascinator.portal.lookup.MintLookupHelper;
 import com.googlecode.fascinator.common.JsonSimpleConfig;
 
@@ -19,6 +20,7 @@ import java.util.TimeZone;
 import java.util.TreeMap;
 
 import org.json.simple.JSONArray;
+
 import java.util.ArrayList;
 
 import org.apache.commons.lang.StringEscapeUtils;
@@ -32,7 +34,7 @@ import org.slf4j.LoggerFactory;
  * @author Linda Octalina
  * 
  */
-public class Util {
+public class Util extends StorageDataUtil {
 
     /** Logger */
     static Logger log = LoggerFactory.getLogger(JsonVelocityTransformer.class);
