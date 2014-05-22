@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.googlecode.the-fascinator.plugins</groupId>
   <artifactId>plugin-transformer-jsonVelocity</artifactId>
-  <version>1.2.1-SNAPSHOT</version>
+  <version>1.2.1</version>
   <name>Fascinator - Plugin - Transformer - JSON Velocity</name>
   <parent>
     <artifactId>organisation</artifactId>
