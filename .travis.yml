@@ -1,0 +1,19 @@
+sudo: required
+language: java
+services:
+- docker
+before_install:
+- mkdir /tmp/build
+- docker pull qcifengineering/redbox-builder
+- docker run -v /tmp/build:/build -e "CLONEPATH=https://github.com/the-fascinator-contrib/plugin-transformer-jsonVelocity.git"
+  qcifengineering/redbox-builder
+install: true
+script: true
+after_success:
+- docker run -v /tmp/build:/build -e "SONATYPE_USERNAME=$SONATYPE_USERNAME" -e "SONATYPE_PASSWORD=$SONATYPE_PASSWORD"
+  qcifengineering/redbox-builder /bin/bash -c "cd build/src;mvn --settings /m2_repo/travis-settings.xml
+  -Dmaven.repo.local=/m2_repo -DskipTests=true deploy"
+env:
+  global:
+  - secure: hc8SKCxiOWUOL5+Te6vGWikIfq8PScnQz8IZVFo1c2hotKlD02cgQsEGjCMoNQOQ7oBZ/5CE3G5g6Ll0g/JiktL1qCkakmWWhn2wT3U7wh+iRVm76I/oAj1u8QbSF3hqen7LnQYHJWZro2ksYaXR2Dbsr17HXcLFVScLB0jBKiYCsTo5vlVRvUMIfY6ZKUPtuQ7KUh07ZGyiQgIfcc+4QyiiH05IC9xm2PW6UhKaeYb2nucLH2O4PoaEGUISHybEp5M8MaK7j6NzFkNu/ALcPWcfAfX9i79cXmiPZXeoCy3abt+p+t68Q2wlNS0/gOqHshLkY7aVQJqWhqIJgv3g+puBC72Fczjp/j0TnQQFkXU7X5WzqSfYtgApLnAKROHAz1HX0CTHPhltqCEyTBJhYdc84LTgYQ0CYoc2SyhZJxD4ElDXu+Wm+yaRC516sZLTL2kvXv6n9CAWINHIMljDclSyvwMnNez3WYkQeyr2zUvrtE4KJVnI515svazFbOKuWurFzWEfn/T/ETEA8bLjI7k4qMc53to30ONNoyLoRujZvxTJQ7OVEsY303SgYjv240Q46RVj3aMhWSjdLLv+/94+rrg0PaqMd4D3UPLNGomeae3GvdGiOUjLIN3+SW8SG1BuY0VAiU2DPTZ6LIRxE3RAXRP8DVNZBt8QlXey9m8=
+  - secure: iTz3FXwvaornhBjkCnh2OUhVqUayEfPmQMNbOm3pik+XRvydvi9gnWg+uN/QwYd7D3c6WmGrd3gkROhIkLLHH70binJHuLzjMiHuRoL/RlhN5D0eRnAXf2fxWPUCEhAJHbdLgayUHoCEnPL/fhLHZdZzeLhVJh70ktgbu0zcLleps1+hTRht3k/j1Nk+zH9Por2Di7H90clcm3KTkZsOqPzOuwyjKJLyrU4Qhu9QOrvaScFp3Y6MFxECSPScuuW95dvcdjuhuSEF41wUYtEqgwhWi4wWcBXhDFvAviLKlFHOCtyJyjZBiJma3eEMCUZg2bySLqJiMz+SnKO1wlnxWjJPUVKS8hQE1b82XSzyvxf+q+HN2rGzWcY19nWcEqYp6MuuLYS5TDHwZTGcUUBTPf0d/3VSkfrmFZt9TQH7WhU+k8hgMkV0dRBBHQzTmCOAksO002ODyMAY+9UYV05k57V3PxLDz9AKsarZTH/QGNZP6Aki3wWHNrU6QtUITpJXI+wpwVDat8ejq9Po1HwRQhmtUd3tGOPF1bGucEUY1T+kY+tiD0c0f8bDjVhUqmpQPdKyE8LnLquNwjgI916hOBbhMai06OpFKedzI1EDHKIzDndxWLo8ujJhuNXXD0Ulqm529yj02t/TqlSIK9BQlv4tfqkjGOiksv4B2W3151Q=
