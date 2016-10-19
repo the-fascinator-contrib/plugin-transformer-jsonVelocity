@@ -45,8 +45,8 @@
     </dependency>
     <dependency>
       <groupId>com.googlecode.the-fascinator.plugins</groupId>
-      <artifactId>plugin-storage-ram</artifactId>
-      <version>1.2</version>
+      <artifactId>plugin-storage-filesystem</artifactId>
+      <version>1.4-SNAPSHOT</version>
       <scope>test</scope>
     </dependency>
     <dependency>

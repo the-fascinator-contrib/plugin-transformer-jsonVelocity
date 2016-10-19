@@ -77,7 +77,7 @@ public class JsonVelocityTransformerTest {
 
     private void transform() throws Exception {
         // Storage
-        ram = PluginManager.getStorage("ram");
+        ram = PluginManager.getStorage("file-system");
         ram.init("{}");
 
         File file = new File(getClass().getResource("/test-config.json")
