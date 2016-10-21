@@ -40,7 +40,7 @@ import com.googlecode.fascinator.common.storage.StorageUtils;
 
 /**
  * Tests the JsonVelocityTransformer
- * 
+ *
  * @author Linda Octalina
  */
 public class JsonVelocityTransformerTest {
@@ -50,7 +50,7 @@ public class JsonVelocityTransformerTest {
     private Util util;
 
     @SuppressWarnings("unused")
-	private JsonSimpleConfig config;
+    private JsonSimpleConfig config;
 
     private JsonSimple tfpackage;
 
@@ -157,21 +157,17 @@ public class JsonVelocityTransformerTest {
     // Utility test
     @Test
     public void testDate() {
-        try {
-        	//Set the TimeZone to Queensland to ensure that date string is correct for test
-        	TimeZone qldZone = TimeZone.getTimeZone("Australia/Brisbane");
-        	TimeZone.setDefault(qldZone);
-            String date = util.getW3CDateTime("2010");
-            Assert.assertEquals(date, "2010-01-01T00:00:00+1000");
-            
-            date = util.getW3CDateTime("2010-10");
-            Assert.assertEquals(date, "2010-10-01T00:00:00+1000");
-            
-            date = util.getW3CDateTime("2010-10-28");
-            Assert.assertEquals(date, "2010-10-28T00:00:00+1000");
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
+        //Set the TimeZone to Queensland to ensure that date string is correct for test
+        TimeZone qldZone = TimeZone.getTimeZone("Australia/Brisbane");
+        TimeZone.setDefault(qldZone);
+        String date = util.getW3CDateTime("2010");
+        Assert.assertEquals(date, "2010-01-01T00:00:00.000+10:00");
+
+        date = util.getW3CDateTime("2010-10");
+        Assert.assertEquals(date, "2010-10-01T00:00:00.000+10:00");
+
+        date = util.getW3CDateTime("2010-10-28");
+        Assert.assertEquals(date, "2010-10-28T00:00:00.000+10:00");
     }
-    
+
 }
