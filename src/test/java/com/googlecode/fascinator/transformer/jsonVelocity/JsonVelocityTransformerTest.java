@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 
+import org.joda.time.DateTimeZone;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -37,6 +38,8 @@ import com.googlecode.fascinator.api.storage.Storage;
 import com.googlecode.fascinator.common.JsonSimple;
 import com.googlecode.fascinator.common.JsonSimpleConfig;
 import com.googlecode.fascinator.common.storage.StorageUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Tests the JsonVelocityTransformer
@@ -44,6 +47,7 @@ import com.googlecode.fascinator.common.storage.StorageUtils;
  * @author Linda Octalina
  */
 public class JsonVelocityTransformerTest {
+    private static Logger log = LoggerFactory.getLogger(JsonVelocityTransformerTest.class);
 
     private JsonVelocityTransformer jsonVelocityTransformer;
 
@@ -154,20 +158,26 @@ public class JsonVelocityTransformerTest {
         Assert.assertEquals(1, anzsrcSeo2.size());
     }
 
-    // Utility test
     @Test
     public void testDate() {
-        //Set the TimeZone to Queensland to ensure that date string is correct for test
-        TimeZone qldZone = TimeZone.getTimeZone("Australia/Brisbane");
-        TimeZone.setDefault(qldZone);
-        String date = util.getW3CDateTime("2010");
-        Assert.assertEquals(date, "2010-01-01T00:00:00.000+10:00");
+        DateTimeZone.setDefault(DateTimeZone.forID("Australia/Brisbane"));
+        DateTimeZone currentZone = DateTimeZone.getDefault();
+        log.info("current zone is: " + currentZone);
 
-        date = util.getW3CDateTime("2010-10");
-        Assert.assertEquals(date, "2010-10-01T00:00:00.000+10:00");
+        String dateInput = "2010";
+        String result = util.getW3CDateTime(dateInput);
+        String expected = "2010-01-01T00:00:00.000+10:00";
+        Assert.assertEquals(expected, result);
 
-        date = util.getW3CDateTime("2010-10-28");
-        Assert.assertEquals(date, "2010-10-28T00:00:00.000+10:00");
+        dateInput = "2010-10";
+        result = util.getW3CDateTime(dateInput);
+        expected = "2010-10-01T00:00:00.000+10:00";
+        Assert.assertEquals(expected, result);
+
+        dateInput = "2010-10-28";
+        result = util.getW3CDateTime(dateInput);
+        expected = "2010-10-28T00:00:00.000+10:00";
+        Assert.assertEquals(expected, result);
     }
 
 }
