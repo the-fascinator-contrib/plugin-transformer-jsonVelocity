@@ -705,10 +705,14 @@ public class JsonVelocityTransformer implements Transformer {
         if (itemTemplates.isDirectory()) {
             // Make sure we only run velocity tempaltes
             List<String> templatePathExclusions = getTemplatePathExclusions();
+            log.debug("template path exclusions: " + templatePathExclusions);
             for (File template : itemTemplates.listFiles()) {
                 String templateName = template.getName();
+                log.debug("template name is: " + templateName);
                 if (templateName.endsWith(".vm") && !templatePathExclusions.contains(templateName)) {
                     templateList.add(template);
+                } else {
+                    log.info("No transformation applied for excluded template: " + templateName);
                 }
             }
         } else {
