@@ -32,6 +32,7 @@ import java.util.Properties;
 import java.util.Date;
 import java.text.SimpleDateFormat;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.velocity.Template;
@@ -350,6 +351,15 @@ public class JsonVelocityTransformer implements Transformer {
     protected String getTemplatePath() {
         return systemConfig.getString(null, "transformerDefaults",
                 "jsonVelocity", "templatesPath");
+    }
+
+    protected List<String> getTemplatePathExclusions() {
+        List<String> templatePathExclusions = systemConfig.getStringList("transformerDefaults",
+                "jsonVelocity", "templatesPathExclusions");
+        if (templatePathExclusions == null) {
+            templatePathExclusions = new ArrayList<String>();
+        }
+        return templatePathExclusions;
     }
 
     /**
@@ -694,8 +704,10 @@ public class JsonVelocityTransformer implements Transformer {
         // Process directory or individual and return
         if (itemTemplates.isDirectory()) {
             // Make sure we only run velocity tempaltes
+            List<String> templatePathExclusions = getTemplatePathExclusions();
             for (File template : itemTemplates.listFiles()) {
-                if (template.getName().endsWith(".vm")) {
+                String templateName = template.getName();
+                if (templateName.endsWith(".vm") && !templatePathExclusions.contains(templateName)) {
                     templateList.add(template);
                 }
             }
